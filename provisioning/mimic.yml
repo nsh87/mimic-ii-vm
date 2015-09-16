@@ -1,0 +1,202 @@
+# Install PostgreSQL and load MIMIC-II data set.
+#
+# Edit hosts file with server configuration if you want to load
+# the MIMIC-II data to a server instead of a local Vagrant VM.
+#
+---
+- hosts: all
+  sudo: yes
+  gather_facts: no
+
+  tasks:
+    - name: ensure apt cache is up to date
+      apt: update_cache=yes
+    - name: ensure packages are installed
+      apt: name={{item}}
+      with_items:
+          - postgresql
+          - libpq-dev
+          - python-psycopg2
+          - unzip
+
+
+- hosts: all
+  sudo: no
+  gather_facts: no
+
+  vars_prompt:
+    - name: "u"
+      prompt: "PhysioNet username"
+      private: yes
+    - name: "p"
+      prompt: "PhysioNet password"
+      private: yes
+
+  vars:
+    dest: /home/vagrant/src/physionet
+    timeout: 30
+    validate: no
+
+  tasks:
+    - name: ensure directory to download mimic-ii files exists
+      file: path={{dest}} state=directory mode=0755
+
+    - name: check if mimic-ii importer already downloaded
+      stat: path={{dest}}/MIMIC-Importer-2.6.tar.gz
+      register: mimic_importer
+
+    - name: download mimic-ii importer
+      get_url: url=https://physionet.org/works/MIMICIIClinicalDatabase/files/downloads-2.6/MIMIC-Importer-2.6.tar.gz url_username={{u}} url_password={{p}} dest={{dest}} timeout={{timeout}} validate_certs={{validate}}
+      when: mimic_importer.stat.exists == False
+
+    - name: unpack mimic-ii importer
+      unarchive: src={{dest}}/MIMIC-Importer-2.6.tar.gz dest={{dest}} copy=no
+      when: mimic_importer.stat.exists == False
+
+    - name: ensure directory to download mimic-ii data exists
+      file: path={{dest}}/MIMIC-Importer-2.6/tarballs state=directory mode=0755
+
+    - name: copy mimic-ii downloader script
+      copy: src=import_scripts/download_mimic.sh  dest=src/physionet/MIMIC-Importer-2.6/download_mimic.sh mode=0744
+
+    - name: download mimic-ii data files
+      shell: src/physionet/MIMIC-Importer-2.6/download_mimic.sh {{u}} {{p}}
+
+    - name: register existence of definitions folder
+      stat: path=/home/vagrant/src/physionet/MIMIC-Importer-2.6/Definitions
+      register: mimic_definitions
+
+    - name: download mimic-ii definitions
+      get_url: url=https://physionet.org/works/MIMICIIClinicalDatabase/files/downloads-2.6/mimic2cdb-2.6-Definitions.tar.gz url_username={{u}} url_password={{p}} dest={{dest}}/MIMIC-Importer-2.6/tarballs timeout={{timeout}} validate_certs={{validate}}
+      when: mimic_definitions.stat.exists == False
+
+    - name: extract definitions
+      command: tar -zxf {{dest}}/MIMIC-Importer-2.6/tarballs/mimic2cdb-2.6-Definitions.tar.gz -C {{dest}}/MIMIC-Importer-2.6
+      when: mimic_definitions.stat.exists == False
+
+    - name: register existence of defintions tarball
+      stat: path={{dest}}/MIMIC-Importer-2.6/tarballs/mimic2cdb-2.6-Definitions.tar.gz 
+      register: mimic_definitions_tarball
+
+    - name: remove definitions tarball
+      command: rm {{dest}}/MIMIC-Importer-2.6/tarballs/mimic2cdb-2.6-Definitions.tar.gz 
+      when: mimic_definitions_tarball.stat.exists == True
+
+# Create privileged database user to load the data
+- hosts: all
+  sudo: yes
+  sudo_user: postgres
+  gather_facts: no
+
+  vars:
+    dbname: MIMIC2
+    dbuser: vagrant
+    dbpassword: igMDi9RVEqaGMoi2
+    dest: /home/vagrant/src/physionet
+
+# Step 1 - create the user and the DB
+  tasks:
+  - name: ensure the database is created
+    postgresql_db: name={{dbname}}
+
+  - name: ensure privileged user has access to database
+    postgresql_user: db={{dbname}} name={{dbuser}} password={{dbpassword}} priv=ALL encrypted=false
+
+  - name: ensure privileged user is the owner of the database
+    postgresql_db: name={{dbname}} owner={{dbuser}}
+
+  - name: ensure privileged user does not have unnecessary privelage
+    postgresql_user: name={{dbuser}} role_attr_flags=SUPERUSER,NOCREATEDB
+
+  - name: check schema
+    command: psql -t -d MIMIC2 -c "\dn;"
+    register: check_schema
+
+  - name: ensure schema and tables exist
+    command: psql MIMIC2 -q -f {{dest}}/MIMIC-Importer-2.6/Definitions/POSTGRES/schema_mimic2v26.sql
+    when: "'mimic2v26' not in check_schema.stdout"
+
+
+- hosts: all
+  sudo: yes
+  sudo_user: postgres
+  gather_facts: no
+ 
+# Create unpriveleged user to have READ access to database
+- hosts: all
+  sudo: yes
+  sudo_user: postgres
+  gather_facts: no
+  
+  vars:
+    dbname: MIMIC2
+    dbuser: mimic
+    userpassword: oNuemmLeix9Yex7W
+    schema: mimic2v26
+    
+  tasks:
+  - name: ensure unpriveleged user exists
+    postgresql_user: db={{dbname}} name={{dbuser}} password={{userpassword}} priv=CONNECT encrypted=false
+
+  - name: ensure unprivileged user has read access to the database
+    postgresql_privs: >
+      db={{dbname}}
+      privs=CONNECT
+      type=database
+      role={{dbuser}} 
+
+  - name: ensure unprivileged user has read access to the schema
+    postgresql_privs: >
+      db={{dbname}}
+      type=schema
+      objs={{schema}}
+      privs=USAGE
+      role={{dbuser}}
+
+  - name: ensure unprivileged user has read access to the schema tables
+    postgresql_privs: >
+      db={{dbname}}
+      schema={{schema}}
+      type=table
+      objs=ALL_IN_SCHEMA
+      privs=SELECT
+      role={{dbuser}}
+
+  - name: ensure unprivileged user does not have unnecessary privilege
+    postgresql_user: name={{dbuser}} role_attr_flags=NOSUPERUSER,NOCREATEDB
+
+# Load the data into the database
+- hosts: all
+  sudo_user: postgres
+  gather_facts: no
+
+  vars_prompt:
+    - name: "n_records"
+      prompt: "Records to load (all/0-99999)"
+      private: yes
+
+  tasks:
+  - name: copy table defintions importer
+    copy: src=import_scripts/load_definitions.sh  dest=src/physionet/MIMIC-Importer-2.6/load_definitions.sh mode=0744
+
+  - name: load table definitions
+    shell: src/physionet/MIMIC-Importer-2.6/load_definitions.sh
+
+  - name: copy data importer
+    copy: src=import_scripts/load_data.sh dest=src/physionet/MIMIC-Importer-2.6/load_data.sh mode=0744
+
+  - name: check if mimic-ii import log exists
+    stat: path=/home/vagrant/src/physionet/MIMIC-Importer-2.6/import.log
+    register: import_log
+
+  - name: if import log exists check if import completed
+    shell: tail -1 /home/vagrant/src/physionet/MIMIC-Importer-2.6/import.log
+    register: import_log_tail
+    when: import_log.stat.exists == True
+
+  - name: create folder for unzipped mimic-ii data
+    shell: mkdir -p /home/vagrant/src/physionet/MIMIC-Importer-2.6/raw_tarballs
+
+  - name: load mimic-ii data into postgres
+    shell: src/physionet/MIMIC-Importer-2.6/load_data.sh {{n_records}} >> src/physionet/MIMIC-Importer-2.6/import.log
+    when: import_log.stat.exists == False or "'Done' not in import_log_tail.stdout"
