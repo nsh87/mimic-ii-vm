@@ -10,7 +10,7 @@ provision the Vagrant VM, and since Windows machines cannot currently be Ansible
 controllers this will not work on Windows.
 
 ## VM Provisioning (a.k.a. Installation)
-Clone the repo and create a virtualenv using the supplied `requirements .txt`. 
+Clone the repo and create a virtualenv using the supplied `requirements.txt`. 
 If using virtualenvwrapper:
  
 ```bash
@@ -37,7 +37,7 @@ OS X after selecting a release version
 ### PostgreSQL (command line)
 The Postgres client is accessed through the command line with `psql`. The
 command line bin is included with the OS-specific installers, but has probably
-not been added to your  `PATH`. If it works after running the installer, you’re
+not been added to your `PATH`. If it works after running the installer, you’re
 fine, otherwise:
 
   * OS X: Add the bin to your path, or instead you can install Postgres via
