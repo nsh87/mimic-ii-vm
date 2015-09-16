@@ -197,6 +197,9 @@
   - name: create folder for unzipped mimic-ii data
     shell: mkdir -p /home/vagrant/src/physionet/MIMIC-Importer-2.6/raw_tarballs
 
+  - name: confirm number of records to load
+    debug: msg="Will load {{n_records}} records into the database"
+
   - name: load mimic-ii data into postgres
     shell: src/physionet/MIMIC-Importer-2.6/load_data.sh {{n_records}} >> src/physionet/MIMIC-Importer-2.6/import.log
     when: import_log.stat.exists == False or "'Done' not in import_log_tail.stdout"
