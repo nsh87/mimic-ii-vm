@@ -88,6 +88,10 @@
   sudo_user: postgres
   gather_facts: no
 
+  handlers:
+  - name: restart postgresql
+    service: name=postgresql state=restarted
+
   vars:
     dbname: MIMIC2
     dbuser: vagrant
@@ -96,6 +100,21 @@
 
 # Step 1 - create the user and the DB
   tasks:
+  - name: ensure postgresql is listening on all IPs
+    lineinfile: dest=/etc/postgresql/9.3/main/postgresql.conf
+                regexp="^#listen_addresses"
+                line="listen_addresses = '*'"
+                state=present
+
+  - name: esnure postgresql allws access to all hosts
+    copy:
+      dest: /etc/postgresql/9.3/main/pg_hba.conf
+      content: |
+        local    all    postgres    peer
+        local    all    all         peer
+        host     all    all         0.0.0.0/0    md5
+    notify: restart postgresql
+
   - name: ensure the database is created
     postgresql_db: name={{dbname}}
 
