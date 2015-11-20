@@ -8,7 +8,8 @@ prevents collisions with data on your own computer, and the VM can easily be
 destroyed to reclaim disk space once experimentation with the data is complete.
  
 ## Requirements
-You will need to have Vagrant and VirtualBox installed.
+You will need to have [Vagrant](https://github.com/nsh87/mimic-ii-vm) and
+(VirtualBox)[https://www.virtualbox.org/wiki/Downloads] installed.
 Ansible is used to provision the Vagrant VM, and since Windows machines
 cannot currently be Ansible controllers this will not work on Windows.
 
