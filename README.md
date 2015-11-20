@@ -57,7 +57,7 @@ Once installed, the settings for connecting to the database are:
   * Host: localhost
   * Port: 2345
   * Maintenance DB: MIMIC2
-  * Username (postgres): `mimic` for read-only access (or `vagrant` if you
+  * Username: `mimic` for read-only access (or `vagrant` if you
     need write access)
   * Password: `igMDi9RVEqaGMoi2` for user `vagrant`, or `oNuemmLeix9Yex7W` for
     user `mimic`
@@ -188,7 +188,7 @@ forwarded to the remote port 5432 over SSH). For example, with pgAdmin3:
   * Host: localhost
   * Port: 63333
   * Maintenance DB: MIMIC2
-  * Username (postgres): `mimic` for read-only access (or `vagrant` if you
+  * Username: `mimic` for read-only access (or `vagrant` if you
     need write access)
   * Password: `igMDi9RVEqaGMoi2` for user `vagrant`, or `oNuemmLeix9Yex7W` for
     user `mimic`
