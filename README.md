@@ -124,11 +124,12 @@ You can "reset" your database to load the data again if needed:
 
 ```bash
 drop schema mimic2v26 cascade;  # drop all tables in the schema
-# you will need to have read/write access.
-# you might need to ssh into the VM and activate psql as user 'vagrant'
+# you will need to have read/write access. you might need to ssh into the VM
+# and activate psql as user 'vagrant'.
 ```
 
-Then run `vagrant provision` to run the Ansible playbook again.
+If you just deleted your data and want to reload it, execute `vagrant provision`
+to run the Ansible playbook again.
 
 ### Psycopg2 (Python client)
 One way to connect to the DB is through Psycopg2, a popular PostgreSQL client
@@ -159,10 +160,6 @@ print colnames
 row = cur.fetchall() 
 for row in rows:
   print "    ", row[1]
-
-# Warning Never, never, NEVER use Python string concatenation (+) or
-# string parameters interpolation (%) to pass variables to a SQL
-# query string. Not even at gunpoint.
 ```
 
 You can read this
@@ -171,19 +168,21 @@ and access the [documentation](http://initd.org/psycopg/docs/) for more
 information.
 
 ## A Word on Remote Connections
-PostgreSQL connections are _not_ encrypted. If you are going to run this on a
+PostgreSQL connections are *not encrypted*. If you are going to run this on a
 remote server, or connect to your VM over a network, you should encrypt your
 connection when accessing the database. One way of doing this is by creating an
 SSH tunnel to the VM:
 
 ```bash
 ssh -L 63333:localhost:5432 vagrant@192.168.34.43
-# this will open an SSH connection in your terminal which you should leave open
+# this will open an SSH connection in your terminal which you should leave open.
+# if you're prompted for a password, try 'vagrant'.
 ```
 
 Here, `192.168.34.43` is the IP address of your VM. Once the SSH tunnel is
-created, you use local port `63333` to connect to the DB (this port is now
-forwarded to the remote port 5432 over SSH). For example, with pgAdmin3:
+created, use local port `63333` to connect to the DB - this port is now
+forwarded to the remote port 5432 over SSH. For example, with pgAdmin3
+connecting over the SSH tunnel would use settings:
 
   * Host: localhost
   * Port: 63333
@@ -197,6 +196,5 @@ Or, with psql:
 
 ```bash
 psql -h localhost -p 63333 MIMIC2 mimic 
-# the last three arguments are <port> <database> <username>
 ```
 
