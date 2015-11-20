@@ -14,7 +14,7 @@ cannot currently be Ansible controllers this will not work on Windows.
 
 ## VM Provisioning (a.k.a. Installation)
 Clone the repo and create a virtualenv using the supplied `requirements.txt`. 
-If using virtualenvwrapper, while in the repository's dir you can simply
+If using virtualenvwrapper, while in the repository's directory you can simply
 execute:
  
 ```bash
@@ -31,12 +31,12 @@ non-private prompts for the Ansible provisioner on Vagrant, so all
 prompts are private and will conceal what you type.
 
 You can easily delete the VM and reclaim your disk space with `vagrant halt`
-and then `vagrant destroy`.
+(to stop the VM) and then `vagrant destroy` (to remove it).
 
 ## Connecting to the Database
-Local port 2345 is forwarded to the guest VM port 5432 (Postgres server's 
-default listening port). Therefore, generally speaking you can connect using
-the host _localhost_ and port 2345.
+While the VM is booted, local port 2345 is forwarded to the guest VM port
+5432 (Postgres server's default listening port). Therefore, generally
+speaking you can connect using the host _localhost_ and port 2345.
 
 There are two user accounts that have access to the database:
 
@@ -199,3 +199,8 @@ Or, with psql:
 psql -h localhost -p 63333 MIMIC2 mimic 
 ```
 
+## Shutting Down and Rebooting the VM
+You can shut down the VM with `vagrant halt`. To boot it up again, `cd` into the
+repository's directory and execute `vagrant up`. The data will remain in the VM
+and once the VM is finished booting you can make connections to the DB as
+before.
