@@ -66,7 +66,7 @@ Once installed, the settings for connecting to the database are:
 
 You will find the data tables under the `mimic2v26` schema.
 
-### PostgreSQL (command line)
+### psql (command line)
 The Postgres client is accessed through the command line with `psql`. The
 command line bin is included with the OS-specific installers, but has probably
 not been added to your `PATH`. If it works after running the installer, you’re
