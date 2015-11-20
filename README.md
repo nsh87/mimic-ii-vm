@@ -7,7 +7,8 @@ the VM. Hosting the MIMIC-II data in a VM can be desirable because this
 prevents collisions with data on your own computer, and the VM can easily be
 destroyed to reclaim disk space once experimentation with the data is complete.
  
-## Requirements You will need to have Vagrant and VirtualBox installed.
+## Requirements
+You will need to have Vagrant and VirtualBox installed.
 Ansible is used to provision the Vagrant VM, and since Windows machines
 cannot currently be Ansible controllers this will not work on Windows.
 
