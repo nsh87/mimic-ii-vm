@@ -31,6 +31,9 @@ type `all` or a number of records (e.g. `100`). There is an issue with
 non-private prompts for the Ansible provisioner on Vagrant, so all
 prompts are private and will conceal what you type.
 
+Note that loading thousands of records can take several hours, and loading the
+entire data set will likely run overnight.
+
 You can easily delete the VM and reclaim your disk space with `vagrant halt`
 (to stop the VM) and then `vagrant destroy` (to remove it).
 
