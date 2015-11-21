@@ -27,11 +27,11 @@ will be prompted for your PhysioNet username and password so the database
 files can be downloaded to the VM as part of provisioning (this could
 take a while, depending on your internet connection). You will also be
 asked how many records you would like to load into the database. You can
-type `all` or a number of records (e.g. `100`). There is an issue with
-non-private prompts for the Ansible provisioner on Vagrant, so all
-prompts are private and will conceal what you type.
+type `all` or a number of records (e.g. `100`). A couple things to note:
 
-Note that loading thousands of records can take several hours, and loading the
+1. There is an issue with non-private prompts for the Ansible provisioner
+on Vagrant, so all prompts are private and will conceal what you type.
+2. Loading thousands of records can take several hours, and loading the
 entire data set will likely run overnight.
 
 You can easily delete the VM and reclaim your disk space with `vagrant halt`
